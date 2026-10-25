@@ -44,6 +44,26 @@ def isolated_backend(tmp_path, monkeypatch):
         test_engine.dispose()
 
 
+def test_frontend_assets_and_static_boundary():
+    client = TestClient(app)
+    public_paths = (
+        "/", "/index.html", "/auth.html", "/app.html", "/verify.html",
+        "/assets/css/app.css", "/assets/css/auth.css", "/assets/css/styles.css",
+        "/assets/css/public-ui.css", "/assets/css/workspace-ui.css",
+        "/assets/js/app.js", "/assets/js/auth.js", "/assets/js/public-verify.js",
+        "/assets/js/script.js", "/assets/images/favicon.svg",
+    )
+    for path in public_paths:
+        assert client.get(path).status_code == 200, path
+    private_paths = (
+        "/.env", "/.env.example", "/.git/config", "/README.md",
+        "/services/api/app/main.py", "/data/vericarb.sqlite3",
+        "/sample-data/demo_project.json", "/tools/demo-video/package.json",
+    )
+    for path in private_paths:
+        assert client.get(path).status_code == 404, path
+
+
 def test_demo_credentials_login(isolated_backend):
     with TestClient(app) as client:
         credentials = {"email": "demo@example.invalid", "password": "VericarbDemo2026!"}

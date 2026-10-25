@@ -6,7 +6,7 @@ Last run: 2026-10-25 UTC.
 |---|---|
 | Hardhat Solidity compile + contract tests (`npm test`) | **Passed** — 5 contract tests. |
 | Backend workflow tests (`python -m pytest services/api/tests -q`) | **Passed** — 2 tests, including network/status endpoint shape, no secret response fields, and invalid wallet-address validation. |
-| JavaScript syntax (`node --check app.js`; `node --check public-verify.js`) | **Passed** after the final UI changes. |
+| JavaScript syntax (`node --check frontend/assets/js/app.js`; `node --check frontend/assets/js/public-verify.js`) | **Passed** after the final UI changes. |
 | Python syntax (`python -m compileall -q services/api/app`) | **Passed** after the final API changes. |
 | Hardhat live network check (`npm run chain:check`) | **Passed** — connected to chain ID 10778, latest block 11859261 at check; all 3 wallet keys absent. |
 | Python live RPC check | **Passed** — chain ID 10778; latest app health check block 11859271; contract address unset. |

@@ -1,8 +1,12 @@
 # VERICARB
 
-VERICARB is a FastAPI + SQLite application with a static responsive workspace and a Hardhat/Solidity registry. Database demo records are labelled; a chain transaction is shown only after a successful X1 receipt and state read-back. An on-chain record proves the submitted identifiers and hashes were recorded; it does not prove that environmental claims are true or certify credits.
+**Carbon integrity, evidence provenance, and traceable credit lifecycles.**
 
-## Workspace
+VERICARB is a working prototype that connects climate-project records, supporting evidence, registry conflict checks, monitoring signals, and human review in one workspace. It combines a vanilla JavaScript frontend, a FastAPI backend, SQLite persistence, and a Solidity registry on X1 EcoChain's Maculatus testnet.
+
+**Status:** local prototype with synthetic demo data and a recorded testnet deployment. It is not a production credit registry, certification service, or live marketplace. An on-chain record proves that identifiers and hashes were recorded, not that the underlying environmental claim is true.
+
+## Features
 
 - Project and evidence management with SHA-256 evidence hashing.
 - Registry imports and conflict checks against imported records.
@@ -10,32 +14,93 @@ VERICARB is a FastAPI + SQLite application with a static responsive workspace an
 - Batch issuance, local transfer and retirement workflows, and public verification.
 - X1 testnet network status, project registration, evidence anchoring, and batch issuance.
 
-## Run locally
+## Repository Structure
+
+```text
+VERICARB/
+|-- frontend/
+|   |-- index.html              Public website
+|   |-- auth.html               Sign-in and demo access
+|   |-- app.html                Application workspace
+|   |-- verify.html             Public batch verification
+|   `-- assets/
+|       |-- css/                Stylesheets
+|       |-- js/                 Browser application code
+|       `-- images/             Icons and local images
+|-- services/
+|   |-- api/
+|   |   |-- app/                FastAPI routes, models, and business services
+|   |   |-- migrations/         Alembic database migrations
+|   |   |-- tests/              API and static-hosting tests
+|   |   `-- requirements.txt    Python dependencies
+|   `-- contracts/
+|       |-- contracts/          Solidity registry
+|       |-- scripts/            Deployment and testnet operations
+|       |-- test/               Hardhat contract tests
+|       `-- package.json        Contract tooling and commands
+|-- docs/                       Architecture, walkthroughs, and runbooks
+|-- sample-data/                Synthetic JSON fixtures and CSV templates
+|-- .env.example                Configuration template without secrets
+|-- .gitignore                  Local and generated file exclusions
+|-- alembic.ini                 Database migration configuration
+`-- README.md                   Project overview and getting started
+```
+
+The frontend is served at the site root, so moving the source files does not change URLs such as `/auth.html` or `/app.html`. FastAPI serves static content only from [frontend](frontend), not the repository root. API requests remain under `/api/`.
+
+Local-only directories such as `data/`, `.venv/`, `node_modules/`, contract artifacts, and editor settings are intentionally excluded from the tracked project layout. Optional development utilities live under `tools/`.
+
+## Technology
+
+| Area | Stack |
+| --- | --- |
+| Frontend | HTML, CSS, vanilla JavaScript, Lucide icons |
+| Backend | Python 3.11+, FastAPI, Pydantic, SQLAlchemy |
+| Persistence | SQLite, Alembic migrations, off-chain evidence files |
+| Blockchain | Solidity, Hardhat, ethers, Web3.py, X1 Maculatus testnet |
+| Tests | pytest, FastAPI TestClient, Hardhat |
+
+## Getting Started
 
 Use Python 3.11 or newer and Node.js 20+. From the repository root:
+
+### 1. Install dependencies
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r services\api\requirements.txt
-npm --prefix services\contracts install
-Copy-Item .env.example .env
-python -m uvicorn services.api.app.main:app --reload --port 8000
+npm --prefix services\contracts ci
 ```
 
-Open [http://localhost:8000/auth.html](http://localhost:8000/auth.html) and select **Explore the demo workspace**. API docs are at [http://localhost:8000/api/docs](http://localhost:8000/api/docs). SQLite and off-chain evidence files are stored under `data/` and are not committed.
+### 2. Configure the application
+
+For a fresh checkout, create a local configuration file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Keep an existing `.env` rather than overwriting it. Set `VERICARB_TOKEN_SECRET` to a long random value. The default database and evidence directories are created locally when the application starts.
+
+### 3. Start the application
+
+```powershell
+python -m uvicorn services.api.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+| Page | Local URL |
+| --- | --- |
+| Public website | [localhost:8000](http://localhost:8000/) |
+| Sign-in and demo access | [localhost:8000/auth.html](http://localhost:8000/auth.html) |
+| Application workspace | [localhost:8000/app.html](http://localhost:8000/app.html) |
+| Interactive API documentation | [localhost:8000/api/docs](http://localhost:8000/api/docs) |
+
+Select **Explore the demo workspace** on the sign-in page to load synthetic records. No separate frontend server or JavaScript build step is required. Use the FastAPI origin rather than opening the HTML directly for authenticated workflows.
 
 The example configuration targets X1 EcoChain Maculatus Testnet (chain ID `10778`) but contains no private keys or registry address. Configure those values in your ignored local `.env` to enable chain actions. Never commit credentials, wallet keys, local databases, or uploaded evidence. Set `VERICARB_TOKEN_SECRET` to a long random value before sharing a running instance.
 
-## Repository layout
-
-- Root HTML, JavaScript, and CSS files: public pages, authentication, and the application workspace.
-- [services/api](services/api): FastAPI backend, database migrations, and API tests.
-- [services/contracts](services/contracts): Solidity registry, Hardhat tests, and explicit testnet scripts.
-- [sample-data](sample-data): preserved synthetic JSON fixtures and registry CSV examples.
-- [docs](docs): architecture, demo walkthrough, contract reference, and deployment runbooks.
-
-## Sample data
+## Sample Data
 
 The sample data is synthetic and does not represent certified credits or real monitoring observations.
 
@@ -46,7 +111,7 @@ The sample data is synthetic and does not represent certified credits or real mo
 
 The JSON files are illustrative fixtures, not a guarantee of compatibility with every API request schema. Use `/api/docs` for current endpoint payloads.
 
-## X1 commands
+## X1 Testnet
 
 From `services/contracts`:
 
@@ -71,17 +136,31 @@ The live testnet lifecycle harness can verify a confirmed, active batch and run 
 
 ```powershell
 python -m pytest services\api\tests -q
-node --check app.js
-node --check auth.js
-node --check public-verify.js
-node --check script.js
+node --check frontend/assets/js/app.js
+node --check frontend/assets/js/auth.js
+node --check frontend/assets/js/public-verify.js
+node --check frontend/assets/js/script.js
 python -m compileall -q services/api/app
 npm --prefix services\contracts test
 ```
 
-API workflow tests use a temporary SQLite database and evidence directory. Contract tests run locally; ordinary tests do not broadcast testnet transactions. See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for recorded results and [docs/X1_TESTNET_SETUP.md](docs/X1_TESTNET_SETUP.md) for network configuration details.
+API workflow tests use a temporary SQLite database and evidence directory. Static-hosting tests check the public pages and assets and confirm that private repository paths return 404. Contract tests run locally; ordinary tests do not broadcast testnet transactions.
 
-## Product limits
+## Documentation
+
+| Guide | Contents |
+| --- | --- |
+| [Project explained](docs/PROJECT_EXPLAINED_A_TO_Z.md) | Product context, architecture, trust boundaries, and roadmap |
+| [Demo walkthrough](docs/DEMO_WALKTHROUGH.md) | Demonstration flow and expected behavior |
+| [Blockchain architecture](docs/BLOCKCHAIN_ARCHITECTURE.md) | Off-chain and on-chain responsibilities |
+| [Contract reference](docs/CONTRACTS.md) | Registry roles, operations, and lifecycle |
+| [X1 setup](docs/X1_TESTNET_SETUP.md) | Network configuration and operational prerequisites |
+| [Deployment and verification](docs/DEPLOYMENT_AND_VERIFICATION.md) | Recorded deployment and explicit testnet operations |
+| [Test report](docs/TEST_REPORT.md) | Recorded verification results and known dependency findings |
+
+## Security and Limitations
+
+Only [frontend](frontend) is publicly mounted. Original evidence downloads use authenticated API routes; hashes are not encryption. Keep the prototype on a trusted local environment: demo access, shared demo credentials, and reset actions are not suitable for a production deployment. Protect signing keys and assess dependency findings before exposing an instance publicly.
 
 - Synthetic demo data and deterministic assessments are not certifications or live environmental observations.
 - Registry conflict checks cover only imported records.

@@ -141,7 +141,7 @@ That can reveal a changed document. It does not prove who authored the original,
 
 Keeping large and sensitive files off-chain limits public disclosure and on-chain storage costs. However, a hash is not encryption or an access-control mechanism. Predictable content can sometimes be guessed and compared, metadata can reveal relationships, and lost off-chain files cannot be recovered from a digest.
 
-Production evidence storage needs access controls, encryption, backups, durable retention, signed source attestations, malware checks, and reliable retrieval. The intended privacy model also needs a deployment fix: the current static mount serves the repository root, putting repository-contained data/configuration at risk of direct public access.
+Production evidence storage needs access controls, encryption, backups, durable retention, signed source attestations, malware checks, and reliable retrieval. Static hosting is restricted to the frontend directory; evidence, configuration, and backend source are outside that public mount. Evidence downloads remain subject to API authentication and authorization.
 
 ## 11. The Carbon Integrity Score
 
@@ -290,7 +290,7 @@ No native VERICARB token, token sale, or speculative incentive scheme is require
 
 ## 20. Critical Risks Before A Public Production Launch
 
-1. **Deployment exposure:** restrict static hosting to intended public assets. The current repository-root static mount creates a risk of exposing data, evidence, and configuration.
+1. **Deployment exposure:** preserve the frontend-only static mount and verify production proxy rules do not expose repository data, evidence, or configuration.
 2. **Demo access:** disable unrestricted demo administrator sign-in and destructive reset in production. Demo credentials and privileges must not protect a live environment.
 3. **Custodial signers:** isolate keys in an appropriate secret manager or signing service; add operational limits, rotation procedures, and stronger administrator governance.
 4. **Split state:** connect remaining lifecycle actions and add reconciliation so local and chain state cannot silently diverge.
@@ -345,7 +345,7 @@ Transaction count alone is not climate impact. A credible impact claim needs evi
 - [X1 client](../services/api/app/services/x1_chain.py): network checks, signing, receipts, and contract access.
 - [Python dependencies](../services/api/requirements.txt) and [contract tooling](../services/contracts/package.json): declared stack.
 - [Registry contract](../services/contracts/contracts/VericarbRegistry.sol): permissions, balances, and state transitions.
-- [Frontend](../app.js): workspace flows, previews, and browser integration.
+- [Frontend](../frontend/assets/js/app.js): workspace flows, previews, and browser integration.
 - [Blockchain architecture](BLOCKCHAIN_ARCHITECTURE.md), [network setup](X1_TESTNET_SETUP.md), and [deployment runbook](DEPLOYMENT_AND_VERIFICATION.md): integration design and recorded testnet activity.
 - [Recorded test report](TEST_REPORT.md): prior validation results and unresolved dependency findings.
 - [Official X1 website](https://x1ecochain.com/) and [developer portal](https://dev.x1ecochain.com/): vendor-published network descriptions, consulted for this guide.

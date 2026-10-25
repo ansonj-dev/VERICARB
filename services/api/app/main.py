@@ -1175,5 +1175,5 @@ def observation_seed_check() -> None:
 
 
 # The API and the plain HTML app share one local origin; API routes are registered before static files.
-app.mount("/", StaticFiles(directory=str(ROOT_DIR), html=True), name="workspace")
+app.mount("/", StaticFiles(directory=str(ROOT_DIR / "frontend"), html=True), name="workspace")
 
