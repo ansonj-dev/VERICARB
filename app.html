@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#063a2c" />
+  <meta name="description" content="VERICARB local prototype workspace for climate project provenance, evidence review, monitoring, and credit lifecycle history." />
+  <title>Workspace — VERICARB</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body class="workspace-body">
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Application navigation">
+      <div class="sidebar-head"><a class="app-brand" href="index.html"><span class="leaf-mark">◢</span><span>VERICARB</span></a><button class="collapse-btn" data-action="collapse" aria-label="Collapse sidebar" title="Collapse sidebar">‹</button></div>
+      <div class="workspace-pill"><span class="workspace-avatar">D</span><span><b>Demo workspace</b><small>Local prototype</small></span><span class="workspace-caret">⌄</span></div>
+      <nav class="side-nav" id="side-nav" aria-label="Workspace pages"></nav>
+      <div class="sidebar-bottom"><div class="impact-mini"><span class="impact-leaf">♧</span><div><small>DEMO IMPACT</small><strong id="side-impact">— tCO₂e</strong><span>Illustrative workspace</span></div></div><div class="sidebar-user"><span class="user-avatar">JD</span><span><b>Jordan Demo</b><small>Demo reviewer</small></span><button aria-label="Account options" class="user-more">···</button></div></div>
+    </aside>
+    <div class="sidebar-backdrop" data-action="close-sidebar"></div>
+    <main class="workspace-main">
+      <header class="topbar">
+        <button class="mobile-menu" data-action="open-sidebar" aria-label="Open navigation">☰</button>
+        <div class="breadcrumbs" id="breadcrumbs"><span>Workspace</span><b>/</b><strong>Dashboard</strong></div>
+        <label class="global-search"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Search projects, credits, or locations…" aria-label="Search projects, credits, or locations" /><kbd>⌘ K</kbd><div class="search-results" id="search-results" hidden></div></label>
+        <span class="demo-badge"><i></i> DEMO ENVIRONMENT</span>
+        <span class="demo-badge chain-badge" id="blockchain-badge" title="Live read-only X1 Maculatus RPC status"><i></i> X1 CHECKING</span>
+        <button class="top-icon" data-route="/alerts" aria-label="Open alerts">♧<span class="alert-count" id="alert-count" hidden>0</span></button>
+        <button class="account-button" data-action="account"><span class="user-avatar">JD</span><span><b>Jordan Demo</b><small>Individual · Demo</small></span><span>⌄</span></button>
+      </header>
+      <div class="demo-notice"><b>DEMO DATA — NOT CERTIFIED CARBON CREDITS</b><span>Local prototype · X1 testnet contract connected · fictional QA records remain labeled DEMO</span><button data-action="dismiss-notice" aria-label="Dismiss demo notice">×</button></div>
+      <section id="page-content" class="page-content" tabindex="-1"></section>
+      <footer class="workspace-footer"><span>VERICARB · Local prototype</span><span>Every Credit. One Traceable History.</span><a href="index.html">Landing page ↗</a></footer>
+    </main>
+    <div id="modal-root"></div>
+    <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
