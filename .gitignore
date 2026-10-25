@@ -15,3 +15,7 @@ node_modules/
 artifacts/
 cache/
 coverage/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

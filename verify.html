@@ -6,26 +6,16 @@
   <meta name="theme-color" content="#073b2a" />
   <title>Public Record — VERICARB</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="app.css" />
-  <style>
-    body.verify-body{min-height:100vh;background:#f3f7f4;color:#17221c;font-family:var(--font-body,Arial,sans-serif)}
-    .verify-wrap{width:min(960px,calc(100% - 32px));margin:0 auto;padding:36px 0 64px}
-    .verify-brand{display:flex;align-items:center;gap:10px;color:#075d36;text-decoration:none;font-weight:800;font-size:1.15rem}
-    .verify-brand img{width:28px;height:28px}
-    .verify-content{margin-top:30px}.verify-state{padding:28px;border-radius:18px;background:#fff;border:1px solid #dce8df}
-    .verify-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .verify-field{padding:14px;background:#f7faf8;border:1px solid #e5eee8;border-radius:12px;overflow-wrap:anywhere}
-    .verify-field small{display:block;color:#65736a;margin-bottom:6px}.verify-field strong{font-size:.95rem}
-    .verify-timeline{display:grid;gap:12px}.verify-event{padding:14px;border-left:3px solid #28a66a;background:#f7faf8;border-radius:0 10px 10px 0}
-    .verify-event small{display:block;color:#68766d;margin-top:5px}
-    .verify-error{color:#8a2b27;background:#fff2f0;border-color:#f2d2ce}
-    @media(max-width:620px){.verify-wrap{width:min(100% - 24px,960px);padding-top:22px}.verify-grid{grid-template-columns:1fr}.verify-state{padding:18px}}
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="public-ui.css" />
 </head>
 <body class="verify-body">
+  <a class="skip-link" href="#verify-content">Skip to public record</a>
   <main class="verify-wrap">
-    <a class="verify-brand" href="index.html"><img src="favicon.svg" alt="" /> VERICARB</a>
-    <div id="verify-content" class="verify-content" aria-live="polite"><section class="verify-state"><p>Looking up the public record…</p></section></div>
+    <a class="verify-brand" href="index.html"><img src="favicon.svg" alt="" width="28" height="28" /> VERICARB</a>
+    <div id="verify-content" class="verify-content" tabindex="-1" aria-live="polite"><section class="verify-state"><h1>Public record</h1><p role="status">Looking up the public record…</p></section></div>
   </main>
   <script src="public-verify.js"></script>
 </body>

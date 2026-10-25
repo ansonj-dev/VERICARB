@@ -204,9 +204,14 @@ def create_seed_file() -> tuple[str, int, str]:
 
 def seed_database() -> None:
     with SessionLocal() as db:
-        if db.get(Profile, "demo-reviewer"):
+        existing_demo = db.get(Profile, "demo-reviewer")
+        if existing_demo:
+            if not existing_demo.password_hash or not existing_demo.password_salt:
+                existing_demo.password_salt, existing_demo.password_hash = hash_password("VericarbDemo2026!")
+                db.commit()
             return
-        user = Profile(id="demo-reviewer", display_name="Jordan Demo", role="admin", email="demo@example.invalid")
+        salt, password_hash = hash_password("VericarbDemo2026!")
+        user = Profile(id="demo-reviewer", display_name="Jordan Demo", role="admin", email="demo@example.invalid", password_salt=salt, password_hash=password_hash)
         db.add(user)
         db.flush()
         forest = Project(

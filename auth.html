@@ -9,13 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="auth.css" />
+  <link rel="stylesheet" href="auth.css?v=readability-2" />
 </head>
 <body>
+  <a class="skip-link" href="#auth-title">Skip to sign in</a>
   <main class="auth-shell">
     <a href="index.html" class="auth-brand"><span class="brand-icon">◢</span> VERICARB</a>
     <section class="auth-card">
-      <div class="auth-heading"><p class="eyebrow">CONTINUOUS CARBON INTEGRITY NETWORK</p><h1 id="auth-title">Welcome back</h1><p id="auth-subtitle">Sign in to your local VERICARB workspace.</p></div>
+      <div class="auth-heading"><p class="eyebrow">CONTINUOUS CARBON INTEGRITY NETWORK</p><h1 id="auth-title" tabindex="-1">Welcome back</h1><p id="auth-subtitle">Sign in to your local VERICARB workspace.</p></div>
       <div class="auth-tabs" role="tablist" aria-label="Account actions"><button class="auth-tab active" type="button" data-auth-mode="login" role="tab" aria-selected="true">Sign in</button><button class="auth-tab" type="button" data-auth-mode="signup" role="tab" aria-selected="false">Create account</button></div>
       <div id="auth-message" class="auth-message" aria-live="polite" hidden></div>
       <form id="auth-form" novalidate>
@@ -27,11 +28,25 @@
       </form>
       <div class="auth-divider"><span>or</span></div>
       <button class="demo-button" id="demo-login" type="button">Explore the demo workspace</button>
+      <button class="test-account-link" id="show-test-account" type="button">View test credentials</button>
       <p class="auth-legal">Local prototype account only. Email verification, password reset, multi-factor authentication, and production identity services are not configured. Demo records are not certified carbon credits.</p>
     </section>
     <a class="back-link" href="index.html">← Back to VERICARB</a>
     <div class="auth-image" role="img" aria-label="Forest canopy and river landscape"></div>
   </main>
-  <script src="auth.js"></script>
+  <dialog class="test-account-dialog" id="test-account-dialog" aria-labelledby="test-account-title" aria-describedby="test-account-description">
+    <div class="test-account-heading">
+      <h2 id="test-account-title">Test account</h2>
+      <button class="test-account-close" id="close-test-account" type="button" aria-label="Close test credentials" title="Close">&times;</button>
+    </div>
+    <p id="test-account-description">Shared demo account. No registration required. Do not enter private or sensitive data.</p>
+    <label for="test-account-email">Email / username</label>
+    <div class="test-account-value"><input id="test-account-email" value="demo@example.invalid" readonly><button type="button" data-copy-credential="test-account-email">Copy email</button></div>
+    <label for="test-account-password">Password</label>
+    <div class="test-account-value"><input id="test-account-password" value="VericarbDemo2026!" readonly><button type="button" data-copy-credential="test-account-password">Copy password</button></div>
+    <p class="test-account-status" id="test-account-status" role="status" aria-live="polite"></p>
+    <button class="auth-submit" id="use-test-account" type="button">Use test account</button>
+  </dialog>
+  <script src="auth.js?v=test-account-1"></script>
 </body>
 </html>

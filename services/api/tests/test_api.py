@@ -44,6 +44,23 @@ def isolated_backend(tmp_path, monkeypatch):
         test_engine.dispose()
 
 
+def test_demo_credentials_login(isolated_backend):
+    with TestClient(app) as client:
+        credentials = {"email": "demo@example.invalid", "password": "VericarbDemo2026!"}
+        response = client.post("/api/auth/login", json=credentials)
+        assert response.status_code == 200
+        headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
+        assert client.get("/api/me", headers=headers).json()["id"] == "demo-reviewer"
+        assert client.post("/api/auth/login", json={**credentials, "password": "incorrect-password"}).status_code == 401
+        with app_db.SessionLocal() as db:
+            demo = db.get(app_main.Profile, "demo-reviewer")
+            demo.password_salt = None
+            demo.password_hash = None
+            db.commit()
+        app_main.seed_database()
+        assert client.post("/api/auth/login", json=credentials).status_code == 200
+
+
 def test_api_workflows(isolated_backend):
     """Exercise local auth, persisted project/evidence, reviewer, and lifecycle rules."""
     # The application reads its DB URL at import time; this test suite uses the

@@ -154,8 +154,10 @@ const currentPath = () => (location.hash.replace(/^#/, '') || '/dashboard');
 const statusClass = (status = '') => `status-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 const statusTag = (status) => `<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`;
 const recordLabel = (demo = true) => demo ? `<span class="tag">DEMO DATA</span>` : '';
+const navigationIcons = { dashboard: 'layout-dashboard', projects: 'trees', credits: 'layers', monitoring: 'activity', evidence: 'files', verification: 'badge-check', conflicts: 'git-compare-arrows', marketplace: 'store', alerts: 'bell', reports: 'chart-no-axes-combined', explorer: 'scan-search', community: 'users', settings: 'settings' };
+const uiIcon = (name, fallback = '') => window.lucide ? `<i data-lucide="${name}" aria-hidden="true"></i>` : fallback;
 const renderNav = () => {
-  $('#side-nav').innerHTML = NAV.map((item) => item.group ? `<div class="nav-group-label">${item.group}</div>` : `<a class="nav-link" data-nav="${item.id}" href="#${item.path}" title="${escapeHtml(item.label)}"><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${escapeHtml(item.label)}</span>${item.optional ? '<span class="nav-optional">Future</span>' : ''}</a>`).join('');
+  $('#side-nav').innerHTML = NAV.map((item) => item.group ? `<div class="nav-group-label">${item.group}</div>` : `<a class="nav-link" data-nav="${item.id}" href="#${item.path}" title="${escapeHtml(item.label)}"><span class="nav-icon" aria-hidden="true">${uiIcon(navigationIcons[item.id], item.icon)}</span><span>${escapeHtml(item.label)}</span>${item.optional ? '<span class="nav-optional">Future</span>' : ''}</a>`).join('');
 };
 
 function routeInfo() {
@@ -177,7 +179,45 @@ function recomputeScore(credit) {
 function toast(message, error = false) {
   const node = document.createElement('div'); node.className = `toast${error ? ' error' : ''}`; node.textContent = message; $('#toast-root').appendChild(node); setTimeout(() => node.remove(), 3200);
 }
+function prepareDataViews(content) {
+  $$('.tabs', content).filter((tabs) => Array.from(tabs.children).every((child) => child.tagName === 'SPAN')).forEach((tabs) => tabs.remove());
+  $$('.data-table', content).forEach((table) => {
+    const headers = Array.from(table.querySelectorAll('thead th'));
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const numericHeaders = /^(tracked credits|quantity|available|score|vintage)$/i;
+    headers.forEach((header, column) => {
+      header.scope = 'col';
+      const numeric = numericHeaders.test(header.textContent.trim());
+      header.classList.toggle('numeric-cell', numeric);
+      rows.forEach((row) => {
+        const cell = row.cells[column];
+        if (cell && cell.colSpan === 1) {
+          cell.dataset.label = header.textContent.trim() || 'Actions';
+          cell.classList.toggle('numeric-cell', numeric);
+        }
+      });
+    });
+    const count = rows.filter((row) => row.cells.length > 1).length;
+    const caption = table.createCaption();
+    caption.className = 'data-table-caption';
+    caption.textContent = `${count.toLocaleString()} ${count === 1 ? 'record' : 'records'}`;
+    const wrapper = table.closest('.data-table-wrap');
+    if (wrapper) {
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute('role', 'region');
+      wrapper.setAttribute('aria-label', `${content.querySelector('h1')?.textContent || 'Workspace'} records`);
+    }
+  });
+  $$('input[type="search"]', content).forEach((input) => { input.spellcheck = false; });
+  $$('.tabs button', content).forEach((button) => button.setAttribute('aria-pressed', String(button.classList.contains('active'))));
+}
 function renderShell() {
+  if (!backendConnected) {
+    $('#page-content').setAttribute('aria-busy', 'true');
+    $('#page-content').innerHTML = '<div class="workspace-loading" role="status"><span class="loading-indicator" aria-hidden="true"></span><h1>Loading workspace…</h1><p>Fetching your project records and connection status.</p></div>';
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
   const { page, id: objectId } = routeInfo();
   const link = NAV.find((x) => x.id === page);
   $$('.nav-link').forEach((x) => x.classList.toggle('active', x.dataset.nav === page || (page === 'project' && x.dataset.nav === 'projects') || (page === 'verify' && x.dataset.nav === 'explorer') || (page === 'credit' && x.dataset.nav === 'credits')));
@@ -203,7 +243,11 @@ function renderShell() {
   const count = $('#alert-count'); count.textContent = openAlerts; count.hidden = openAlerts === 0;
   $('.demo-notice').classList.toggle('notice-dismissed', db.noticesDismissed);
   const content = $('#page-content');
+  content.removeAttribute('aria-busy');
   content.innerHTML = renderPage(page, objectId);
+  prepareDataViews(content);
+  $$('.nav-link').forEach((link) => { if (link.classList.contains('active')) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current'); });
+  if (window.lucide) window.lucide.createIcons();
   content.focus({ preventScroll: true });
 }
 function renderPage(page, objectId) {
@@ -227,8 +271,8 @@ function dashboardPage() {
   const atRisk = db.credits.filter((c) => c.state === 'At Risk').length;
   const openReviews = db.reviews.filter((r) => r.state === 'Pending').length;
   const pending = db.evidence.filter((e) => e.state === 'Needs human review' || e.state === 'Assessment ready').length;
-  return `${pageHeader('Welcome back, Jordan.', 'Track. Review. Protect. See the provenance and open actions in your demo workspace.')}
-    <section class="dashboard-hero"><div class="hero-welcome"><p class="eyebrow" style="color:#9cf1bc">LOCAL PROTOTYPE · DEMO ACCOUNT</p><h1>Track. Verify. Protect.<br>Real climate impact.</h1><p>Your workspace for project records, evidence, and credit lifecycle history.</p><div class="hero-mini-metrics"><div><strong>${db.projects.length}</strong><small>Demo projects</small></div><div><strong>${formatTonnes(owned)}</strong><small>Available demo credits</small></div><div><strong>${formatTonnes(retired)}</strong><small>Recorded retirement</small></div></div></div><div class="insight-card"><span class="insight-check">✓</span><div><strong>Today's insight · Synthetic</strong><p>${atRisk ? 'A demo monitoring signal needs human review.' : 'No open demo monitoring signals.'} Alerts are signals, not confirmed reversals.</p></div></div></section>
+  return `${pageHeader('Workspace overview', 'Project provenance, credit balances, and the work that needs your attention.', `<a class="btn" href="#/reports">${uiIcon('download', '↓')} Reports</a><a class="btn btn-primary" href="#/new">${uiIcon('plus', '+')} New project</a>`)}
+    <section class="workspace-summary"><div class="summary-copy"><span class="summary-kicker">CLIMATE INTEGRITY / DEMO WORKSPACE</span><h2>Portfolio status</h2><p>${atRisk ? `${atRisk} at-risk ${atRisk === 1 ? 'batch needs' : 'batches need'} a closer look.` : 'No at-risk batches in this workspace.'} ${openReviews + pending} items awaiting human review.</p><a href="#/verification" class="summary-action">Open review queue ${uiIcon('arrow-up-right', '↗')}</a></div><div class="summary-image" role="img" aria-label="Forest canopy in the demo workspace"></div></section>
     <div class="metric-grid">
       ${metricCard('My Projects', db.projects.length, 'Synthetic workspace records', '▧')}
       ${metricCard('Credits Owned', formatTonnes(owned), 'Available demo balance', '◈')}
@@ -238,12 +282,13 @@ function dashboardPage() {
     <div class="quick-grid">
       ${quickCard('Register Project', 'Create a database project record', '＋', '/new')}${quickCard('Upload Evidence', 'Store off-chain and hash on the server', '▤', '/evidence')}${quickCard('View Credits', 'Inspect demo batches', '◈', '/credits')}${quickCard('Monitor Impact', 'Review synthetic signals', '⌁', '/monitoring')}${quickCard('Explore Marketplace', 'Future phase preview', '▣', '/marketplace')}
     </div>
+    <div class="bottom-grid dashboard-review"><section class="card card-pad">${cardTitle('Needs Attention', 'Current demo workspace actions')}<div class="activity-list">${attentionRows()}</div></section><section class="card card-pad">${cardTitle('Recent Activity', 'Append-only local demo event history')}<div class="activity-list">${db.events.slice(0, 4).map(activityItem).join('') || emptyMini('No activity yet.', 'New actions will be added here.')}</div></section></div>
     <div class="dash-grid">
       <section class="card card-pad">${cardTitle('Your Projects', 'Demo project records', `<a class="table-action" href="#/projects">View all →</a>`)}<div class="project-stack">${db.projects.slice(0, 3).map(projectCard).join('') || emptyMini('No projects yet.', 'Register a project to start a local record.')}</div></section>
-      <section class="card card-pad">${cardTitle('Impact Overview', 'Illustrative demo activity · not live impact', '<span class="chip">Demo period</span>')}<div class="metric-grid" style="grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:3px">${miniMetric(formatTonnes(owned), 'Available')}${miniMetric(formatTonnes(retired), 'Retired')}${miniMetric(`${atRisk}`, 'At risk batches')}</div>${activityChart()}<div class="chart-legend"><span><i class="legend-dot"></i>Available balance</span><span><i class="legend-dot alt"></i>Retired history</span></div></section>
-      <section class="card card-pad">${cardTitle('Project Map', 'Illustrative locations · no live map service')}<div class="map-placeholder"><span class="map-demo-label">DEMO MAP · NOT GEOREFERENCED</span><span class="map-pin"></span><div class="map-popup"><strong>${escapeHtml(db.projects[0]?.name || 'Demo project')}</strong><span>Location is illustrative</span></div></div><p class="tiny" style="margin:8px 0 0">Coordinates and project boundaries are not configured.</p></section>
+      <section class="card card-pad">${cardTitle('Credit balances', 'Available and retired balances from workspace batch records', '<span class="chip">DEMO RECORDS</span>')}<div class="balance-totals">${miniMetric(formatTonnes(owned), 'Available')}${miniMetric(formatTonnes(retired), 'Retired')}${miniMetric(`${atRisk}`, 'At risk batches')}</div>${activityChart()}<div class="chart-legend"><span><i class="legend-dot"></i>Available balance</span><span><i class="legend-dot alt"></i>Retired history</span></div></section>
+      <section class="card card-pad project-locations">${cardTitle('Project locations', 'Locations supplied in project records; boundaries are not verified')}<div class="location-list">${db.projects.map((project) => `<a class="location-row" href="#/project/${encodeURIComponent(project.id)}"><span class="location-symbol">${uiIcon('map-pin', '⌖')}</span><span><strong>${escapeHtml(project.name)}</strong><small>${escapeHtml([project.country, project.region].filter(Boolean).join(' / ') || 'Location not supplied')}</small></span>${statusTag(project.status)}</a>`).join('') || emptyMini('No project locations.', 'Locations appear when project records are added.')}</div></section>
     </div>
-    <div class="bottom-grid"><section class="card card-pad">${cardTitle('Recent Activity', 'Append-only local demo event history')}<div class="activity-list">${db.events.slice(0, 4).map(activityItem).join('') || emptyMini('No activity yet.', 'New actions will be added here.')}</div></section><section class="card card-pad">${cardTitle('Needs Attention', 'Current demo workspace actions')}<div class="activity-list">${attentionRows()}</div></section></div>${blockchainActivity()}`;
+    ${blockchainActivity()}`;
 }
 function blockchainActivity() {
   const network = blockchainStatus?.network;
@@ -252,9 +297,9 @@ function blockchainActivity() {
   const explorer = network?.explorer_url || 'https://maculatus-scan.x1eco.com';
   return `<section class="card card-pad blockchain-activity">${cardTitle('Blockchain Activity', 'Live network check · on-chain records are distinct from demo database entries', `<a class="btn btn-sm" href="${escapeHtml(explorer)}" target="_blank" rel="noopener">Open X1 Explorer ↗</a>`)}<div class="chain-overview"><div><small>NETWORK</small><strong>${escapeHtml(network?.network_name || 'X1 EcoChain Testnet (Maculatus)')}</strong></div><div><small>CHAIN ID</small><strong>${network?.actual_chain_id ?? network?.expected_chain_id ?? '—'}</strong></div><div><small>RPC</small><strong>${live ? `Connected · block ${network.latest_block ?? '—'}` : escapeHtml(network?.state || 'Checking')}</strong></div><div><small>REGISTRY CONTRACT</small><strong>${network?.contract_deployed ? escapeHtml(network.contract_address) : 'Not deployed/configured'}</strong></div></div>${transactions.length ? `<div class="chain-transactions">${transactions.map((tx) => `<div class="chain-transaction"><span class="status status-confirmed">Confirmed</span><strong>${escapeHtml(tx.action.replaceAll('_',' ').toLowerCase())}</strong><code>${escapeHtml(tx.transaction_hash)}</code><a href="${escapeHtml(tx.explorer_url)}" target="_blank" rel="noopener">View ↗</a></div>`).join('')}</div>` : `<p class="chain-empty">${live ? 'No confirmed VERICARB transactions recorded yet.' : escapeHtml(network?.error || 'Waiting for the X1 network check.')}</p>`}<small class="chain-checked">Last checked ${escapeHtml(network?.checked_at || 'not yet checked')}. Demo and local events are not represented as chain transactions.</small></section>`;
 }
-function metricCard(label, value, foot, icon) { return `<article class="card metric-card"><div class="metric-label"><span>${label}</span><span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${foot} · DEMO</div></article>`; }
-function miniMetric(value, label) { return `<div class="card" style="padding:9px"><strong style="display:block;font-size:.85rem;color:var(--ink)">${value}</strong><small class="tiny muted">${label}</small></div>`; }
-function quickCard(title, desc, icon, path) { return `<button class="quick-card" data-route="${path}"><span class="quick-icon">${icon}</span><span><strong>${title}</strong><small>${desc}</small></span></button>`; }
+function metricCard(label, value, foot, icon) { const metricIcons = { 'My Projects': 'trees', 'Credits Owned': 'layers', 'Credits Retired': 'circle-check', 'Open Review Items': 'clipboard-check' }; const displayValue = String(value).endsWith(' tCO₂e') ? `${escapeHtml(String(value).replace(' tCO₂e', ''))}<span class="metric-unit">tCO₂e</span>` : escapeHtml(value); return `<article class="card metric-card"><div class="metric-label"><span>${label}</span><span class="metric-icon">${uiIcon(metricIcons[label] || 'chart-no-axes-combined', icon)}</span></div><div class="metric-value">${displayValue}</div><div class="metric-foot">${foot} · DEMO</div></article>`; }
+function miniMetric(value, label) { return `<div class="mini-metric"><strong>${value}</strong><small>${label}</small></div>`; }
+function quickCard(title, desc, icon, path) { const icons = { '/new': 'plus', '/evidence': 'upload', '/credits': 'layers', '/monitoring': 'activity', '/marketplace': 'store' }; return `<button class="quick-card" data-route="${path}"><span class="quick-icon">${uiIcon(icons[path], icon)}</span><span><strong>${title}</strong><small>${desc}</small></span>${uiIcon('arrow-up-right')}</button>`; }
 function emptyMini(title, copy) { return `<div class="empty-state" style="padding:18px"><h3>${title}</h3><p>${copy}</p></div>`; }
 function activityItem(event) { return `<div class="activity-item"><span class="activity-bullet">${event.type.toLowerCase().includes('risk') ? '!' : '✓'}</span><span><strong>${escapeHtml(event.type)} <span class="tag">DEMO</span></strong><small>${escapeHtml(event.targetId)} · ${escapeHtml(event.reason)}</small></span><time class="activity-time">${niceDate(event.at)}</time></div>`; }
 function attentionRows() { const rows = [];
@@ -263,9 +308,9 @@ function attentionRows() { const rows = [];
   return rows.length ? rows.join('') : emptyMini('Nothing needs review.', 'New evidence or observations will appear here.');
 }
 function activityChart() {
-  const available = [18, 24, 29, 38, 33, 44, 48, 60, 54, 68, 79, 71];
-  const retired = [10, 13, 11, 18, 21, 18, 25, 28, 24, 31, 35, 39];
-  return `<div class="chart-wrap" role="img" aria-label="Illustrative demo chart of monthly credit lifecycle records; not live impact data">${available.map((n, i) => `<div class="chart-col"><span class="chart-bar" style="height:${n}%"></span><span class="chart-bar alt" style="height:${retired[i]}%"></span><span class="chart-month">${['J','F','M','A','M','J','J','A','S','O','N','D'][i]}</span></div>`).join('')}</div><p class="tiny muted" style="margin:8px 0 0">Illustrative chart shape only. No production metrics are connected.</p>`;
+  const batches = db.credits.slice(0, 5);
+  const maximum = Math.max(1, ...batches.map((batch) => Number(batch.availableKg || 0) + Number(batch.retiredKg || 0)));
+  return `<div class="balance-chart">${batches.map((batch) => `<a class="balance-row" href="#/credit/${encodeURIComponent(batch.id)}"><span class="balance-label"><strong>${escapeHtml(batch.id)}</strong><small>${formatTonnes(batch.availableKg)} available / ${formatTonnes(batch.retiredKg)} retired</small></span><span class="balance-track" aria-hidden="true"><i style="width:${Number(batch.availableKg || 0) / maximum * 100}%"></i><i class="retired" style="width:${Number(batch.retiredKg || 0) / maximum * 100}%"></i></span></a>`).join('') || emptyMini('No batch balances.', 'Balances appear when credit batches are added.')}</div>${db.credits.length > 5 ? '<a class="table-action" href="#/credits">View all batch balances →</a>' : ''}`;
 }
 
 function projectsPage() {
@@ -615,7 +660,11 @@ document.addEventListener('input', (event) => {
 function applyProjectSearch(query) {
   const q = query.toLowerCase().trim();
   const rows = db.projects.filter((p) => (selectedProjectFilter === 'All' || p.status.toLowerCase().replaceAll(' ', '-') === selectedProjectFilter.toLowerCase().replaceAll(' ', '-')) && `${p.name} ${p.id} ${p.country} ${p.region} ${p.registryRef}`.toLowerCase().includes(q));
-  const tbody = $('#project-rows'); if (tbody) tbody.innerHTML = rows.map(projectRow).join('') || `<tr><td colspan="6">${emptyMini('No matching projects.', 'Try another search or status filter.')}</td></tr>`;
+  const tbody = $('#project-rows');
+  if (tbody) {
+    tbody.innerHTML = rows.map(projectRow).join('') || `<tr><td colspan="6">${emptyMini('No matching projects.', 'Try another search or status filter.')}</td></tr>`;
+    prepareDataViews($('#page-content'));
+  }
 }
 function updateGlobalSearch(query) {
   const root = $('#search-results'); const q = query.toLowerCase().trim(); if (!q) { root.hidden = true; root.innerHTML = ''; return; }
@@ -790,6 +839,11 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('click', (event) => { if (!event.target.closest('.global-search')) $('#search-results').hidden = true; });
 
 renderNav();
+$('.skip-link')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  $('#page-content').focus();
+  $('#page-content').scrollIntoView({ block: 'start' });
+});
 if (!location.hash) location.hash = '#/dashboard';
 renderShell();
 initializeBackend();

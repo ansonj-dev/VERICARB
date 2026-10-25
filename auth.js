@@ -2,6 +2,28 @@ const TOKEN_KEY = 'vericarb-api-demo-token';
 let mode = 'login';
 const form = document.querySelector('#auth-form');
 const message = document.querySelector('#auth-message');
+const testAccountDialog = document.querySelector('#test-account-dialog');
+document.querySelector('#show-test-account').addEventListener('click', () => testAccountDialog.showModal());
+document.querySelector('#close-test-account').addEventListener('click', () => testAccountDialog.close());
+document.querySelectorAll('[data-copy-credential]').forEach((button) => button.addEventListener('click', async () => {
+  const input = document.getElementById(button.dataset.copyCredential);
+  const status = document.querySelector('#test-account-status');
+  try {
+    await navigator.clipboard.writeText(input.value);
+    status.textContent = `${button.textContent === 'Copy email' ? 'Email' : 'Password'} copied.`;
+  } catch {
+    input.focus();
+    input.select();
+    status.textContent = 'Clipboard unavailable. The selected value can be copied manually.';
+  }
+}));
+document.querySelector('#use-test-account').addEventListener('click', () => {
+  setMode('login');
+  document.querySelector('#auth-email').value = document.querySelector('#test-account-email').value;
+  document.querySelector('#auth-password').value = document.querySelector('#test-account-password').value;
+  testAccountDialog.close();
+  document.querySelector('#auth-submit').focus();
+});
 const showMessage = (text, isError = false) => { message.textContent = text; message.classList.toggle('error', isError); message.hidden = false; };
 function setMode(nextMode) {
   mode = nextMode;
@@ -40,3 +62,5 @@ document.querySelector('#demo-login').addEventListener('click', async () => {
     window.location.replace('app.html#/dashboard');
   } catch (error) { showMessage(error.message, true); button.disabled = false; button.textContent = 'Explore the demo workspace'; }
 });
+setMode('login');
+testAccountDialog.showModal();
